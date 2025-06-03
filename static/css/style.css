@@ -1,0 +1,71 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hero Section */
+header {
+    background: #28a745;
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+    border-radius: 20px;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+header p {
+    font-size: 1.2rem;
+}
+
+header .btn {
+    font-size: 1.1rem;
+    padding: 12px 24px;
+}
+h2 {
+    color: black !important;
+}
+/* Search Section */
+.container h2 {
+    font-weight: bold;
+    color: #28a745;
+}
+
+/* Card Styling */
+.card {
+    border-radius: 10px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
+
+/* Tutor Badges */
+.badge {
+    font-size: 14px;
+    padding: 5px 10px;
+}
+
+/* Icons Styling */
+i {
+    font-size: 2.5rem;
+}
+
+/* Footer */
+footer {
+    width: 100%;
+    background-color: #1b5027;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    border-radius: 0; /* Curved top edges */
+    margin-top: 30px; /* Creates space between footer and 'What Our Students Say' */
+    position: relative;
+}

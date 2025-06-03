@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Tutor Dashboard</h2>
+    <div class="row g-4">
+        <!-- Pending Connection Requests -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-3 rounded bento-box">
+                <h3 class="mb-3">Pending Connection Requests</h3>
+                <ul class="list-group">
+                    {% for request in connection_requests %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center mt-1">
+                        {{ request.student.full_name }} 
+                        <a href="{% url 'approve_connection_request' request.id %}" class="btn btn-success btn-sm">Approve</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No pending requests.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Upcoming Sessions -->
+        <div class="col-md-6">
+            <div class="card shadow-sm p-3 rounded bento-box">
+                <h3 class="mb-3">Upcoming Sessions</h3>
+                <ul class="list-group">
+                    {% for session in upcoming_sessions %}
+                    <li class="list-group-item mt-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ session.subject.name }}</strong> with <strong>{{ session.student.full_name }}</strong> at {{ session.scheduled_time }}
+                        </div>
+                        <div class="d-flex column-gap-2">
+                            <a href="{% url 'session_details' session.id %}" class="btn btn-warning" style="font-size: 12px;">View</a>
+                            {% if session.status == "completed" %}
+                                <span class="badge bg-success" >Completed</span>
+                            {% elif session.status == "approved" %}
+                                <form action="{% url 'mark_session_completed' session.id %}" method="POST" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" style="font-size: 12px;">Mark as Completed</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </li>
+{% empty %}
+<li class="list-group-item text-muted">No upcoming sessions.</li>
+{% endfor %}
+                </ul>
+            </div>
+        </div>
+        <!-- Previous Sessions -->
+        <div class="col-md-12">
+            <div class="card shadow-sm p-3 rounded bento-box">
+                <h3 class="mb-3">Previous Sessions</h3>
+                <ul class="list-group">
+                    {% for session in previous_sessions %}
+                    <li class="list-group-item mt-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ session.subject.name }}</strong> with <strong>{{ session.student.full_name }}</strong> 
+                            on {{ session.scheduled_time }}
+                        </div>
+                        <a href="{% url 'session_details' session.id %}" class="btn btn-info btn-sm">View</a>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">No previous sessions.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                fetch('/update-location/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    })
+                });
+            }, function(error) {
+                console.error("Error fetching location:", error.message);
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+    });
+    </script>
+    
+{% endblock %}

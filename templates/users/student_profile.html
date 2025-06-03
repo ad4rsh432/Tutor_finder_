@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Student Profile</h2>
+    
+    <div class="row g-4">
+        <!-- Profile Information Card -->
+        <div class="col-md-4">
+            <div class="card shadow-sm p-3 text-center">
+                <div class="profile-pic-container mb-3">
+                    {% if profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 150px; height: 150px;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" class="rounded-circle img-fluid" alt="Default Profile Picture">
+                    {% endif %}
+                </div>
+                <h4>{{ profile.full_name }}</h4>
+                <p class="text-muted">{{ profile.location }}</p>
+                <p><strong>Age:</strong> {{ profile.age }}</p>
+                <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
+                <p><strong>Bio:</strong> {{ profile.bio }}</p>
+            </div>
+        </div>
+
+        <!-- Profile Edit Form -->
+        <div class="col-md-8">
+            <div class="card shadow-sm p-4">
+                <h4 class="mb-3">Edit Profile</h4>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label">Full Name:</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ profile.full_name }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="phone_number" class="form-label">Phone Number:</label>
+                            <input type="text" name="phone_number" class="form-control" value="{{ profile.phone_number }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="date_of_birth" class="form-label">Date of Birth:</label>
+                            <input type="date" name="date_of_birth" class="form-control" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="location" class="form-label">Location:</label>
+                            <input type="text" name="location" class="form-control" value="{{ profile.location }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="age" class="form-label">Age:</label>
+                            <input type="number" name="age" class="form-control" value="{{ profile.age }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="profile_picture" class="form-label">Profile Picture:</label>
+                            <input type="file" name="profile_picture" class="form-control">
+                        </div>
+
+                        <div class="col-12">
+                            <label for="subjects_interested" class="form-label">Subjects Interested:</label>
+                            <select name="subjects_taught" class="form-control" multiple>
+                                {% for subject in all_subjects %}
+                                    <option value="{{ subject.id }}" {% if subject in profile.subjects_taught.all %}selected{% endif %}>
+                                        {{ subject.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="address" class="form-label">Address:</label>
+                            <textarea name="address" class="form-control">{{ profile.address }}</textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="bio" class="form-label">Bio:</label>
+                            <textarea name="bio" class="form-control">{{ profile.bio }}</textarea>
+                        </div>
+
+                        <div class="col-12 text-center mt-3">
+                            <button type="submit" class="btn btn-primary w-50">Update Profile</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <br><br>
+</div>
+{% endblock %}

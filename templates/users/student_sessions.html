@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Your Sessions</h2>
+
+    <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">Upcoming Sessions</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed Sessions</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4">
+        <!-- Upcoming Sessions -->
+        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
+            {% if upcoming_sessions %}
+                <div class="list-group">
+                    {% for session in upcoming_sessions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ session.subject.name }}</h5>
+                                <p class="mb-1 text-muted">With <strong>{{ session.tutor.full_name }}</strong> at {{ session.scheduled_time }}</p>
+                                {% if session.meeting_link %}
+                                    <a href="{{ session.meeting_link }}" class="btn btn-success btn-sm" target="_blank">Join Meeting</a>
+                                {% else %}
+                                    <span class="badge bg-warning">Waiting for Meeting Link</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'session_details' session.id %}" class="btn btn-primary btn-sm">View Details</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning">No upcoming sessions.</div>
+            {% endif %}
+        </div>
+
+        <!-- Completed Sessions -->
+        <div class="tab-pane fade" id="completed" role="tabpanel">
+            {% if completed_sessions %}
+                <div class="list-group">
+                    {% for session in completed_sessions %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ session.subject.name }}</h5>
+                                <p class="mb-1 text-muted">With <strong>{{ session.tutor.full_name }}</strong> on {{ session.scheduled_time }}</p>
+                            </div>
+                            <a href="{% url 'session_details' session.id %}" class="btn btn-secondary btn-sm">View Details</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">No completed sessions.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

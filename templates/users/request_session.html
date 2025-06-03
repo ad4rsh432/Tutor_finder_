@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Request Session with {{ tutor.full_name }}</h2>
+    <p><strong>Location:</strong> {{ tutor.location }}</p>
+    <p><strong>Hourly Rate:</strong> ${{ tutor.hourly_rate }}/hour</p>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" id="session-form">
+        {% csrf_token %}
+    
+        <div class="mb-3">
+            <label class="form-label">Select Subject</label>
+            <select name="subject_id" id="subject_id" class="form-control" required>
+                <option value="">Select a subject</option>
+                {% for subject in subjects_t %}
+                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    
+        <div class="mb-3">
+            <label class="form-label">Select Date</label>
+            <input type="date" name="session_date" id="session_date" class="form-control" required>
+        </div>
+    
+        <div class="mb-3">
+            <label class="form-label">Start Time</label>
+            <input type="time" name="start_time" id="start_time" class="form-control" required>
+        </div>
+    
+        <div class="mb-3">
+            <label class="form-label">End Time</label>
+            <input type="time" name="end_time" id="end_time" class="form-control" required>
+        </div>
+    
+        <button type="submit" class="btn btn-success" id="submit-button">Request Session</button>
+    </form>
+    
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const startTimeInput = document.getElementById("start_time");
+        const endTimeInput = document.getElementById("end_time");
+        const totalCostLabel = document.getElementById("total-cost");
+        const qrCodeImg = document.getElementById("qr-code");
+        const sessionForm = document.getElementById("session-form");
+        const submitButton = document.getElementById("submit-button");
+
+        // Get CSRF token from the form
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+        // Convert Django decimal to a valid float
+        const hourlyRate = parseFloat("{{ tutor.hourly_rate|default:0|floatformat:2 }}");
+
+        function calculateCost() {
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+
+            if (!startTime || !endTime) return;
+
+            const start = new Date(`2000-01-01T${startTime}`);
+            const end = new Date(`2000-01-01T${endTime}`);
+
+            const hours = (end - start) / (1000 * 60 * 60);
+
+            if (hours > 0) {
+                const totalCost = (hours * hourlyRate).toFixed(2);
+                totalCostLabel.textContent = `$${totalCost}`;
+
+                const qrData = `Payment for ${hours} hours with {{ tutor.full_name }} - Total: $${totalCost}`;
+                qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+                qrCodeImg.style.display = "block";
+            } else {
+                totalCostLabel.textContent = "$0.00";
+                qrCodeImg.style.display = "none";
+            }
+        }
+
+        startTimeInput.addEventListener("input", calculateCost);
+        endTimeInput.addEventListener("input", calculateCost);
+
+        // Intercept form submission
+        sessionForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // Stop normal form submission
+            submitButton.disabled = true; // Prevent multiple submissions
+
+            // Collect form data
+            const formData = new FormData(sessionForm);
+
+            fetch(window.location.href, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": csrfToken // Add CSRF token
+                }
+            })
+            .then(response => response.json())  // Expect JSON response
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Session request successful!");
+                    window.location.reload(); // Reload to show updated data
+                } else {
+                    alert("Error: " + data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while submitting the form.");
+            })
+            .finally(() => {
+                submitButton.disabled = false; // Re-enable button
+            });
+        });
+    });
+</script>
+
+
+
+
+{% endblock %}

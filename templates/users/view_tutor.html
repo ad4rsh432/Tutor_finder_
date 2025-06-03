@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <div class="row">
+            <!-- Profile Picture Section -->
+            <div class="col-md-4 text-center">
+                <img src="{{ tutor.profile_picture.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="max-width: 200px;">
+            </div>
+
+            <!-- Tutor Info -->
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ tutor.full_name }}</h2>
+                <p class="text-muted">📍 {{ tutor.location|default:"Location not provided" }}</p>
+                
+                <!-- Subjects Taught -->
+                <p><strong>Subjects Taught:</strong>
+                    {% for subject in tutor.subjects_taught.all %}
+                        <span class="badge bg-primary">{{ subject.name }}</span>
+                    {% empty %}
+                        <span class="text-muted">No subjects listed.</span>
+                    {% endfor %}
+                </p>
+
+                <!-- Rating -->
+                <p><strong>Rating:</strong> 
+                    {% for i in "12345" %}
+                        {% if tutor.rating >= i|add:"0.5" %}
+                            ⭐
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                    ({{ tutor.rating }}/5)
+                </p>
+
+                <p><strong>Experience:</strong> 🎓 {{ tutor.experience }} years</p>
+                <p><strong>Date of Birth:</strong> 📅 {{ tutor.date_of_birth|date:"F j, Y" }}</p>
+                <p><strong>Phone:</strong> 📞 <a href="tel:{{ tutor.phone_number }}">{{ tutor.phone_number|default:"Not Available" }}</a></p>
+                <p><strong>Hourly Rate:</strong> 💰 ₹{{ tutor.hourly_rate|default:"N/A" }} per hour</p>
+            </div>
+        </div>
+
+        <!-- Bio Section -->
+        <div class="mt-4">
+            <h4>About Me</h4>
+            <p class="text-muted">{{ tutor.bio|default:"No bio available." }}</p>
+        </div>
+
+        <!-- Request Session Button -->
+        <div class="text-center mt-3">
+            <a href="{% url 'request_session' tutor.id %}" class="btn btn-success btn-lg">Request a Session</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4 bg-white">
+    <h2 class="text-center">Find Tutors</h2>
+    <div class="d-flex justify-content-center">
+        <div class="w-50">
+            <form method="get" class="mb-3">
+                <input type="text" name="q" class="form-control" placeholder="Search by name, subject, or location" value="{{ query }}">
+                <button type="submit" class="btn btn-primary mt-2">Search</button>
+            </form>
+        </div>
+    </div>
+    <ul class="list-group">
+        {% for tutor in tutors %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">{{ tutor.full_name }}</h5>
+                <p class="mb-1 text-muted">Location: {{ tutor.location }}</p>
+                <div>
+                    {% for s in tutor.subjects_taught.all %}
+                        <span class="badge bg-primary">{{ s.name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if tutor in connected_tutors %}
+                <!-- ✅ Show 'Connected' badge if already connected -->
+                <span class="badge bg-secondary">Connected</span>
+            {% else %}
+                <!-- ❌ Show 'Connect' button if not connected -->
+                <form method="post" action="{% url 'send_connection_request' tutor.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm">Connect</button>
+                </form>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item">No tutors found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Tutor Finder{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+    /* background: url("{% static 'bg2.jpg' %}"); */
+    background-size: cover; /* Keep original size */
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) 100%),
+        url("{% static 'bg2.jpg' %}");
+    background-repeat: no-repeat; /* Repeat image */
+    background-position: center; /* Align image to top-left */
+    position: relative;
+    height: 100vh;
+    
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success " style="padding: 10px;">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">Tutor Finder</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto" style="column-gap: 10px;">
+                    {% if user.is_authenticated %}
+                    <li >
+                        <h2 class="badge bg-secondary p-2 mt-2">Welcome, {{ user.username }}</h2>
+                    </li>
+                    
+                    {% if request.user.role == 'tutor' %}
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white" href="{% url 'tutor_profile' %}">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="Profile Image" 
+                                style="width: 30px; height: 30px; border-radius: 50%;">
+                        {% else %}
+                            <img src="{% static 'img/default_image.png' %}" alt="Default Profile Image" 
+                                style="width: 30px; height: 30px; border-radius: 50%;">
+                        {% endif %}
+                        {{ profile.full_name }}
+
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'tutor_sessions' %}">Sessions ({{ pending_session }})</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'student_profile' %}">
+                            {% if tutor.profile_picture %}
+                                <img src="{{ student.profile_picture.url }}" alt="Profile Image" 
+                                    style="width: 30px; height: 30px; border-radius: 50%;">
+                            {% else %}
+                                <img src="{% static 'img/default_image.jpg' %}" alt="Default Profile Image" 
+                                    style="width: 30px; height: 30px; border-radius: 50%;">
+                            {% endif %}
+                            {{student.full_name}}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'search_tutors' %}">Find Tutors</a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'book_session' %}">Book a Session</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'student_sessions_view' %}">View Sessions</a>
+                    </li>
+                    {% endif %}
+                    <form action="{% url 'logout' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Logout</button>
+                    </form>
+                {% else %}
+
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white " href="{% url 'login' %}">Login</a>
+                    </li>
+                    
+                {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS (Optional for interactive components) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

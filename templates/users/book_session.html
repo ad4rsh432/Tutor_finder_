@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Find a Tutor</h2>
+
+    <!-- Subject Selection Form -->
+    <form method="GET" class="mb-4">
+        <label for="subject" class="form-label">Select Subject:</label>
+        <select name="subject" id="subject" class="form-select" onchange="this.form.submit()">
+            <option value="">All Subjects</option>
+            {% for subject in subjects %}
+                <option value="{{ subject.id }}" {% if subject.id|stringformat:"s" == selected_subject %}selected{% endif %}>
+                    {{ subject.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
+    
+
+    <h3 class="mb-3">Available Tutors</h3>
+
+    {% if connected_tutors %}
+        <div class="list-group">
+            {% for tutor in connected_tutors %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ tutor.full_name }}</h5>
+                        <p class="mb-1 text-muted">Location: {{ tutor.location }}</p>
+                        <div>
+                            {% for s in tutor.subjects_taught.all %}
+                                <span class="badge bg-primary">{{ s.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <a href="{% url 'request_session' tutor.id %}" class="btn btn-primary btn-sm">Request Session</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning">No tutors found.</div>
+    {% endif %}
+</div>
+{% endblock %}
