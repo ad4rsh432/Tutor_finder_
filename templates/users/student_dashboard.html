@@ -1,120 +1,156 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Student Dashboard</h2>
-    
-    <div class="row g-4">
-        <!-- Connected Tutors -->
-        <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Connected Tutors</h3>
-                <ul class="list-group">
-                    {% for tutor in connected_tutors %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center mt-2">
-                        {{ tutor.full_name }} 
-                        <a href="{% url 'view_tutor_profile' tutor.id %}" class="btn btn-primary btn-sm">View Profile</a>
-                    </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted mt-2">No connected tutors yet.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+{% load static %}
+{% block title %}Student Dashboard — TutorFinder{% endblock %}
 
-        <!-- Pending Requests -->
-        <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Pending Requests</h3>
-                <ul class="list-group">
-                    {% for request in pending_requests %}
-                    <li class="list-group-item mt-2 bg-success text-white">Request sent to <b>{{ request.tutor.full_name }}</b> </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted mt-2">No pending requests.</li>
-                    {% endfor %}
-                </ul>
+{% block content %}
+<div class="container py-4">
+    <!-- Hero Section -->
+    <div class="row mb-5" data-aos="fade-down">
+        <div class="col-12">
+            <div class="profile-hero p-4 p-md-5 d-flex flex-column flex-md-row align-items-center gap-4">
+                <div class="position-relative">
+                    {% if student.profile_picture %}
+                    <img src="{{ student.profile_picture.url }}" class="avatar-xl border-4"
+                        alt="{{ student.full_name }}">
+                    {% else %}
+                    <div
+                        class="avatar-xl bg-white bg-opacity-20 d-flex align-items-center justify-content-center border-4">
+                        <i class="bi bi-person text-white fs-1"></i>
+                    </div>
+                    {% endif %}
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="text-center text-md-start">
+                    <span class="badge badge-accent-soft mb-2 text-uppercase">Student Account</span>
+                    <h1 class="hero-title mb-1 text-white">Hi, {{ student.full_name|default:user.username }}!</h1>
+                    <p class="opacity-75 mb-0 text-white">Ready to learn? You have {{ upcoming_sessions.count }}
+                        upcoming sessions.</p>
+                </div>
+                <div class="ms-md-auto d-flex flex-wrap gap-2 justify-content-center">
+                    <a href="{% url 'student_profile' %}" class="btn btn-outline-light border-2 px-4"><i
+                            class="bi bi-person-gear me-2"></i>Edit Profile</a>
+                    <a href="{% url 'search_tutors' %}" class="btn btn-primary-custom px-4"><i
+                            class="bi bi-search me-2"></i>Find Tutors</a>
+                    <a href="{% url 'student_sessions_view' %}?tab=requested" class="btn btn-outline-light border-2 px-4">
+                        <i class="bi bi-hourglass-split me-2"></i>Requested Sessions
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Upcoming Sessions -->
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Upcoming Sessions</h3>
-                <ul class="list-group">
-                    {% for session in upcoming_sessions %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center mt-2">
-                        <div>
-                            <strong>{{ session.subject.name }}</strong> with <strong>{{ session.tutor.full_name }}</strong> 
-                            <br> <small>{{ session.scheduled_time }}</small>
-                        </div>
-                        <a href="{% url 'session_details' session.id %}" class="btn btn-warning btn-sm">View Session</a>
-                    </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted mt-2">No upcoming sessions.</li>
-                    {% endfor %}
-                </ul>
+    <!-- Quick Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-value" data-count="{{ upcoming_sessions.count }}">0</div>
+                <div class="stat-label">Upcoming Sessions</div>
             </div>
         </div>
-        
-         <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Nearby Tutors</h3>
-                <ul class="list-group">
-                    {% for tutor, distance in nearby_tutors %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">{{ tutor.full_name }} - {{ distance|floatformat:2 }} km away</h5>
-                            <p class="mb-1 text-muted">Location: {{ tutor.location }}</p>
-                            <div>
-                                {% for s in tutor.subjects_taught.all %}
-                                    <span class="badge bg-primary">{{ s.name }}</span>
-                                {% endfor %}
-                            </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon accent"><i class="bi bi-people"></i></div>
+                <div class="stat-value" data-count="{{ connected_tutors.count }}">0</div>
+                <div class="stat-label">My Tutors</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'student_sessions_view' %}?tab=completed" class="text-decoration-none d-block">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success text-white"><i class="bi bi-check2-all"></i></div>
+                    <div class="stat-value" data-count="{{ completed_sessions.count }}">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="custom-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h4 class="mb-0 fw-bold">Next Classes</h4>
+                    <a href="{% url 'student_sessions_view' %}" class="small fw-bold text-primary">Full Schedule</a>
+                </div>
+                <div class="session-list">
+                    {% for s in upcoming_sessions|slice:":3" %}
+                    <div class="session-row p-3 border rounded-3 mb-3 d-flex align-items-center gap-3">
+                        <div class="session-icon bg-light p-3 rounded-3"><i class="bi bi-book text-primary"></i></div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold">{{ s.subject.name }}</h6>
+                            <small class="text-muted">with {{ s.tutor.full_name }}</small>
+                            <div class="mt-1"><span class="badge badge-primary-soft small text-dark">{{ s.scheduled_time|date:"D, M d" }} at {{ s.scheduled_time|time:"H:i" }}</span></div>
                         </div>
-            
-                        {% if tutor in connected_tutors %}
-                            <!-- ✅ Show 'Connected' badge if already connected -->
-                            <span class="badge bg-secondary">Connected</span>
-                        {% else %}
-                            <!-- ❌ Show 'Connect' button if not connected -->
-                            <form method="post" action="{% url 'send_connection_request' tutor.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">Connect</button>
-                            </form>
-                        {% endif %}
+                        <a href="{% url 'session_details' s.id %}" class="btn btn-sm btn-outline-primary">Details</a>
+                    </div>
                     {% empty %}
-                        <li class="list-group-item text-muted mt-2">No nearby tutors found.</li>
+                    <div class="text-center py-5">
+                        <p class="text-muted">No sessions booked yet.</p><a href="{% url 'search_tutors' %}"
+                            class="text-primary small fw-bold">Find a Tutor</a>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+            <div class="custom-card p-4 mb-4">
+                <h5 class="mb-4 fw-bold">My Tutors</h5>
+                <div class="tutor-pile">
+                    {% for t in connected_tutors|slice:":4" %}
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        {% if t.profile_picture %}<img src="{{ t.profile_picture.url }}" class="avatar-sm">{% else %}
+                        <div class="avatar-sm bg-light d-flex align-items-center justify-content-center"><i
+                                class="bi bi-person text-muted"></i></div>{% endif %}
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 small fw-bold">{{ t.full_name }}</h6>
+                            <div class="text-warning small"><i class="bi bi-star-fill"></i> {{ t.rating }}</div>
+                        </div>
+                        <a href="{% url 'view_tutor_profile' t.id %}" class="btn btn-sm btn-link"><i
+                                class="bi bi-arrow-right"></i></a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small text-center">No tutors connected.</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .profile-hero {
+        background: var(--grad-hero);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+    }
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                fetch('/update-location/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    })
-                });
-            }, function(error) {
-                console.error("Error fetching location:", error.message);
-            });
-        } else {
-            console.error("Geolocation is not supported by this browser.");
-        }
-    });
-    </script>
-    
+    .status-indicator {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 18px;
+        height: 18px;
+        background: #10b981;
+        border: 3px solid #1a3a5c;
+        border-radius: 50%;
+    }
+
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .badge-primary-soft {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+</style>
+
+
 {% endblock %}
+

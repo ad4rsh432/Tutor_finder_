@@ -13,22 +13,35 @@ class StudentRegisterForm(UserCreationForm):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your phone number'}),
         required=True
     )
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Create a password'}),
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Repeat your password'}),
+    )
     subjects_interested = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
-        widget=forms.CheckboxSelectMultiple(),
-        required=True
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'size': '5',
+            'style': 'height:auto;'
+        }),
+        required=True,
+        help_text='Hold Ctrl/Cmd to select multiple subjects.'
     )
     address = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your address'}),
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your address', 'rows': '3'}),
         required=True
     )
     location = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your location'}),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City / Area'}),
         required=True
     )
     age = forms.IntegerField(
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter your age'}),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Your age'}),
         required=True
     )
 
@@ -36,10 +49,8 @@ class StudentRegisterForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'full_name', 'phone_number', 'subjects_interested', 'address', 'location', 'age', 'password1', 'password2']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your username'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}),
-            'password1': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}),
-            'password2': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'}),
         }
 
     def save(self, commit=True):
@@ -85,25 +96,36 @@ class TutorRegisterForm(UserCreationForm):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your phone number'}),
         required=True
     )
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Create a password'}),
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Repeat your password'}),
+    )
     subjects_taught = forms.ModelMultipleChoiceField(
         queryset=Subject.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=True
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'size': '5',
+            'style': 'height:auto;'
+        }),
+        required=True,
+        help_text='Hold Ctrl/Cmd to select multiple subjects.'
     )
     experience = forms.IntegerField(
         widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Years of experience'}),
         required=True
     )
     address = forms.CharField(
-        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your address'}),
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter your address', 'rows': '3'}),
         required=True
     )
     age = forms.IntegerField(
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter your age'}),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Your age'}),
         required=True
     )
-
-    # Fields for multiple qualifications
     degree = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Degree (e.g., BSc in Math)'}),
@@ -111,25 +133,23 @@ class TutorRegisterForm(UserCreationForm):
     )
     institution = forms.CharField(
         max_length=255,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'University/Institution'}),
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'University / Institution name'}),
         required=True
     )
     year_completed = forms.IntegerField(
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Year Completed'}),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Year completed (e.g. 2022)'}),
         required=True
     )
 
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'full_name', 'phone_number', 'subjects_taught', 
-            'experience', 'address', 'age', 'password1', 'password2'
+            'username', 'email', 'full_name', 'phone_number', 'subjects_taught',
+            'experience', 'address', 'age', 'degree', 'institution', 'year_completed', 'password1', 'password2'
         ]
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your username'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your email'}),
-            'password1': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}),
-            'password2': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'}),
         }
 
     def save(self, commit=True):

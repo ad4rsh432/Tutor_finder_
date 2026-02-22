@@ -1,97 +1,138 @@
 {% extends "base.html" %}
+{% block title %}Session Details — TutorFinder{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="card shadow-lg p-4">
-        <h2 class="text-center mb-4">Session Details</h2>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
 
-        <div class="row">
-            <div class="col-md-8 mx-auto">
-                <!-- Session Information -->
-                <div class="mb-3">
-                    <p class="fs-5"><strong>Subject:</strong> {{ session.subject.name }}</p>
-                    <p class="fs-5"><strong>Time:</strong> {{ session.scheduled_time }}</p>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-0">Session Details</h2>
+                    <p class="text-muted small mb-0">Review this session's full details below.</p>
                 </div>
+                {% if session.status == 'completed' %}<span class="badge badge-custom badge-success-soft px-3 py-2">COMPLETED</span>{% elif session.status == 'approved' %}<span class="badge badge-custom badge-primary-soft px-3 py-2">APPROVED</span>{% else %}<span class="badge badge-custom badge-warning-soft px-3 py-2">PENDING</span>{% endif %}
+            </div>
 
-                <!-- Tutor Information -->
-                <div class="card p-3 bg-light">
-                    <h4 class="text-primary">Tutor Details</h4>
-                    <p class="fs-5"><strong>Name:</strong> {{ session.tutor.full_name }}</p>
-                    <p class="fs-5"><strong>Email:</strong> <a href="mailto:{{ session.tutor.user.email }}" class="text-decoration-none">{{ session.tutor.user.email }}</a></p>
-                    <p class="fs-5"><strong>Experience:</strong> {{ session.tutor.experience }} years</p>
-                </div>
+            <div class="custom-card p-4 p-md-5">
 
-                <!-- Tutor Only: Add Meeting Link -->
-                {% if is_tutor and session.status != "completed" %}
-                    <div class="card bg-light p-3 mt-4">
-                        <h5 class="text-primary">Add/Update Meeting Link</h5>
-                        <form method="POST">
-                            {% csrf_token %}
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-3 h-100" style="background:var(--primary-xlight);border:1px solid var(--primary-light);">
+                            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-book me-2"></i>Topic &amp; Time</h5>
                             <div class="mb-3">
-                                <label for="meeting_link" class="form-label">Meeting Link:</label>
-                                <input type="url" name="meeting_link" value="{{ session.meeting_link }}" class="form-control" required>
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size:.7rem;">Subject</small>
+                                <span class="fs-5 fw-bold" style="color:var(--primary);">{{ session.subject.name }}</span>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Save</button>
+                            <div>
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size:.7rem;">Scheduled For</small>
+                                <span class="fw-bold">{{ session.scheduled_time|date:"D, M d Y | H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-4 rounded-3 h-100" style="background:var(--accent-xlight);border:1px solid var(--accent-light);">
+                            <h5 class="fw-bold mb-3" style="color:var(--accent-dark);">
+                                <i class="bi bi-person me-2"></i>{% if is_tutor %}Student{% else %}Tutor{% endif %} Info
+                            </h5>
+                            <p class="fw-bold mb-1">{% if is_tutor %}{{ session.student.full_name }}{% else %}{{ session.tutor.full_name }}{% endif %}</p>
+                            <p class="text-muted small mb-0"><i class="bi bi-envelope me-1"></i>{% if is_tutor %}{{ session.student.user.email }}{% else %}{{ session.tutor.user.email }}{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if session.status != "completed" %}
+                <div class="mb-4">
+                    {% if is_tutor %}
+                    <div class="p-4 rounded-3 mb-3" style="background:var(--primary-xlight);border:1.5px solid var(--primary-light);">
+                        <h5 class="fw-bold mb-3" style="color:var(--primary);"><i class="bi bi-link-45deg me-2"></i>Meeting Link</h5>
+                        <form method="POST" class="row g-3">
+                            {% csrf_token %}
+                            <div class="col-md-9">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-camera-video"></i></span>
+                                    <input type="url" name="meeting_link" value="{{ session.meeting_link }}" class="form-control" placeholder="Paste Zoom / Meet link" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary-custom w-100">Update</button>
+                            </div>
                         </form>
                     </div>
-                {% endif %}
-
-                <!-- Show Meeting Link & Join Button for Students (Only if not completed) -->
-                {% if session.status != "completed" and session.meeting_link %}
-                    <div class="alert alert-info mt-4 text-center">
-                        <p class="fs-5"><strong>Meeting Link:</strong> <a href="{{ session.meeting_link }}" class="text-decoration-none" target="_blank">{{ session.meeting_link }}</a></p>
-                    </div>
-                    
-                    {% if request.user == session.student.user %}
-                        <div class="text-center mt-3">
-                            <a href="{{ session.meeting_link }}" class="btn btn-success btn-lg w-100">Join Meeting</a>
-                        </div>
                     {% endif %}
+                    {% if session.meeting_link %}
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-4 rounded-3" style="background:#ecfdf5;border:1.5px solid #a7f3d0;">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-2 p-2 me-3 text-white" style="background:#059669;"><i class="bi bi-camera-video-fill"></i></div>
+                            <div>
+                                <h6 class="mb-0 fw-bold" style="color:#065f46;">Live Meeting Ready</h6>
+                                <small style="color:#059669;">{{ session.meeting_link|truncatechars:55 }}</small>
+                            </div>
+                        </div>
+                        <a href="{{ session.meeting_link }}" class="btn fw-bold px-4 py-2 text-white" style="background:#059669;border-radius:8px;" target="_blank"><i class="bi bi-play-circle me-1"></i>Join Now</a>
+                    </div>
+                    {% elif not is_tutor %}
+                    <div class="p-4 rounded-3 text-center" style="background:var(--accent-xlight);border:1.5px dashed var(--accent-light);">
+                        <i class="bi bi-hourglass-split fs-2 mb-2 d-block" style="color:var(--accent);"></i>
+                        <h6 class="fw-bold">Waiting for meeting link...</h6>
+                        <p class="text-muted mb-0 small">Your tutor will share the link before the session.</p>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endif %}
 
-                <!-- Show Rating Form if Session is Completed -->
-                {% if session.status == "completed" and request.user == session.student.user %}
-                    <!-- Check if the student has already rated -->
-                    {% if not session.rating %}
-                        <div class="card bg-light p-3 mt-4">
-                            <h5 class="text-primary">Rate Your Tutor</h5>
+                {% if session.status == "completed" %}
+                <div class="border-top pt-4 mt-2">
+                    {% if request.user == session.student.user %}
+                        {% if not session.rating %}
+                        <div class="p-4 rounded-3" style="background:var(--light);border:2px dashed var(--border);">
+                            <h5 class="fw-bold mb-4 text-center">How was your session?</h5>
                             <form method="POST" action="{% url 'rate_tutor' session.id %}">
                                 {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="rating" class="form-label">Your Rating (1-5):</label>
-                                    <select name="rating" class="form-select" required>
-                                        <option value="">Select a rating</option>
-                                        <option value="1">1 - Poor</option>
-                                        <option value="2">2 - Fair</option>
-                                        <option value="3">3 - Good</option>
-                                        <option value="4">4 - Very Good</option>
-                                        <option value="5">5 - Excellent</option>
-                                    </select>
+                                <div class="row justify-content-center">
+                                    <div class="col-md-7">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Rating</label>
+                                            <select name="rating" class="form-select" required>
+                                                <option value="5">&#11088;&#11088;&#11088;&#11088;&#11088; Excellent</option>
+                                                <option value="4">&#11088;&#11088;&#11088;&#11088; Very Good</option>
+                                                <option value="3">&#11088;&#11088;&#11088; Good</option>
+                                                <option value="2">&#11088;&#11088; Fair</option>
+                                                <option value="1">&#11088; Poor</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Feedback <small class="text-muted">(optional)</small></label>
+                                            <textarea name="feedback" class="form-control" rows="3" placeholder="Share your experience..."></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold"><i class="bi bi-send me-2"></i>Submit Review</button>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="feedback" class="form-label">Your Feedback:</label>
-                                    <textarea name="feedback" class="form-control" rows="3" placeholder="Share your experience (optional)"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Submit Rating</button>
                             </form>
                         </div>
-                    {% else %}
-                        <div class="alert alert-success mt-4">
-                            <h5>Your Rating:</h5>
-                            <p><strong>Rating:</strong> {{ session.rating.rating }}/5</p>
-                            <p><strong>Feedback:</strong> {{ session.rating.feedback }}</p>
+                        {% else %}
+                        <div class="p-4 rounded-3 text-center" style="background:var(--accent-xlight);border:1px solid var(--accent-light);">
+                            <h5 class="fw-bold mb-3">Your Review</h5>
+                            <div class="mb-2" style="font-size:1.8rem;color:var(--accent);">{% for i in "12345" %}{% if forloop.counter <= session.rating.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</div>
+                            <p class="fst-italic text-muted">"{{ session.rating.feedback }}"</p>
                         </div>
-                    {% endif %}
-                {% endif %}
-                {% if session.status == "completed" and request.user == session.tutor.user %}
-                    <div class="alert alert-success mt-4">
-                        <h5>Your Rating:</h5>
-                        <p><strong>Rating:</strong> {{ session.rating.rating }}/5</p>
-                        <p><strong>Feedback:</strong> {{ session.rating.feedback }}</p>
+                        {% endif %}
+                    {% elif request.user == session.tutor.user and session.rating %}
+                    <div class="p-4 rounded-3 text-center" style="background:var(--primary-xlight);border:1px solid var(--primary-light);">
+                        <h5 class="fw-bold mb-3" style="color:var(--primary);">Student's Review</h5>
+                        <div class="mb-2" style="font-size:1.8rem;color:var(--accent);">{% for i in "12345" %}{% if forloop.counter <= session.rating.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}</div>
+                        <p class="fst-italic text-muted">"{{ session.rating.feedback }}"</p>
                     </div>
+                    {% endif %}
+                </div>
                 {% endif %}
+
+                <div class="mt-5 pt-4 border-top text-center">
+                    <a href="{% if is_tutor %}{% url 'tutor_dashboard' %}{% else %}{% url 'student_dashboard' %}{% endif %}" class="btn btn-outline-secondary px-5 rounded-pill"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a>
+                </div>
 
             </div>
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

@@ -59,7 +59,7 @@ class StudentProfile(models.Model):
     connected_tutors = models.ManyToManyField("TutorProfile", related_name="connected_students", blank=True, default="")
     full_name = models.CharField(max_length=255, default="Unknown")
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='static/profile_pics/students/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/students/', blank=True, null=True)
     subjects_interested = models.ManyToManyField(Subject, related_name="interested_students")
     age = models.IntegerField(default=0)
     location = models.CharField(max_length=255, blank=True, null=True)
@@ -80,7 +80,7 @@ class TutorProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, default="Unknown")
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='static/profile_pics/tutors/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/tutors/', blank=True, null=True)
     subjects_taught = models.ManyToManyField(Subject, related_name="tutors")
     experience = models.IntegerField(default=0)
     rating = models.FloatField(default=0.0)
@@ -108,29 +108,20 @@ class ConnectionRequest(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.student.user.username} → {self.tutor.user.username} ({self.status})"
-
-
-
-class ConnectionRequest(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
-    tutor = models.ForeignKey(TutorProfile, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=10,
-        choices=[('pending', 'Pending'), ('approved', 'Approved')],
-        default='pending'
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
     def save(self, *args, **kwargs):
         """ Auto-connect student and tutor when approved """
+        old_status = None
+        if self.pk:
+            old_status = ConnectionRequest.objects.get(pk=self.pk).status
+        
         super().save(*args, **kwargs)
-        if self.status == "approved":
+        
+        if self.status == "approved" and old_status != "approved":
             self.student.connected_tutors.add(self.tutor)
 
     def __str__(self):
         return f"{self.student.user.username} → {self.tutor.user.username} ({self.status})"
+
 
 class Session(models.Model):
     STATUS_CHOICES = [

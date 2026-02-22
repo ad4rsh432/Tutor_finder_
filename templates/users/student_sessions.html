@@ -1,61 +1,116 @@
 {% extends "base.html" %}
+{% block title %}My Sessions - TutorFinder{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Your Sessions</h2>
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="fw-bold mb-1">My Sessions</h2>
+            <p class="text-muted">Track your upcoming classes and past learning.</p>
+        </div>
+    </div>
 
-    <ul class="nav nav-tabs" id="sessionTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab">Upcoming Sessions</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed Sessions</button>
-        </li>
-    </ul>
+    <!-- Tabs -->
+    <div class="custom-card p-2 mb-4 bg-light border-0 shadow-sm rounded-4">
+        <ul class="nav nav-pills nav-fill" id="sessionTabs" role="tablist">
+            <li class="nav-item"><button id="tab-upcoming" class="nav-link active rounded-3 py-2 fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#up" type="button"><i class="bi bi-calendar-event me-2"></i>Upcoming</button></li>
+            <li class="nav-item"><button id="tab-requested" class="nav-link rounded-3 py-2 fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#req" type="button"><i class="bi bi-hourglass-split me-2"></i>Requested</button></li>
+            <li class="nav-item"><button id="tab-completed" class="nav-link rounded-3 py-2 fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#comp" type="button"><i class="bi bi-check-circle me-2"></i>Completed</button></li>
+        </ul>
+    </div>
 
     <div class="tab-content mt-4">
-        <!-- Upcoming Sessions -->
-        <div class="tab-pane fade show active" id="upcoming" role="tabpanel">
-            {% if upcoming_sessions %}
-                <div class="list-group">
-                    {% for session in upcoming_sessions %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">{{ session.subject.name }}</h5>
-                                <p class="mb-1 text-muted">With <strong>{{ session.tutor.full_name }}</strong> at {{ session.scheduled_time }}</p>
-                                {% if session.meeting_link %}
-                                    <a href="{{ session.meeting_link }}" class="btn btn-success btn-sm" target="_blank">Join Meeting</a>
-                                {% else %}
-                                    <span class="badge bg-warning">Waiting for Meeting Link</span>
-                                {% endif %}
-                            </div>
-                            <a href="{% url 'session_details' session.id %}" class="btn btn-primary btn-sm">View Details</a>
+        <!-- Upcoming -->
+        <div class="tab-pane fade show active" id="up" role="tabpanel">
+            <div class="row g-4">
+                {% for s in upcoming_sessions %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="custom-card h-100 p-4 border-start border-primary border-4 shadow-sm border-0">
+                        <div class="d-flex justify-content-between mb-3"><span class="badge badge-primary-soft">{{ s.subject.name }}</span><small class="fw-bold">{{ s.scheduled_time|date:"M d, H:i" }}</small></div>
+                        <h5 class="fw-bold mb-3">{{ s.tutor.full_name }}</h5>
+                        <div class="d-grid gap-2">
+                            {% if s.meeting_link %}<a href="{{ s.meeting_link }}" class="btn btn-primary-custom"
+                                target="_blank">Join Now</a>{% else %}<button class="btn btn-light disabled"
+                                disabled>Link Pending</button>{% endif %}
+                            <a href="{% url 'session_details' s.id %}" class="btn btn-link btn-sm text-muted">View
+                                Details</a>
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
-            {% else %}
-                <div class="alert alert-warning">No upcoming sessions.</div>
-            {% endif %}
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <h5>No upcoming sessions</h5><a href="{% url 'search_tutors' %}"
+                        class="btn btn-primary-custom px-4 mt-2">Find a Tutor</a>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-
-        <!-- Completed Sessions -->
-        <div class="tab-pane fade" id="completed" role="tabpanel">
-            {% if completed_sessions %}
-                <div class="list-group">
-                    {% for session in completed_sessions %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">{{ session.subject.name }}</h5>
-                                <p class="mb-1 text-muted">With <strong>{{ session.tutor.full_name }}</strong> on {{ session.scheduled_time }}</p>
-                            </div>
-                            <a href="{% url 'session_details' session.id %}" class="btn btn-secondary btn-sm">View Details</a>
+        <!-- Requested -->
+        <div class="tab-pane fade" id="req" role="tabpanel">
+            <div class="row g-4">
+                {% for s in requested_sessions %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="custom-card h-100 p-4 border-start border-warning border-4 shadow-sm border-0">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="badge bg-warning-subtle text-dark border">{{ s.subject.name }}</span>
+                            <small class="text-muted">{{ s.scheduled_time|date:"M d, H:i" }}</small>
                         </div>
-                    {% endfor %}
+                        <h5 class="fw-bold mb-2">{{ s.tutor.full_name }}</h5>
+                        <p class="text-muted small mb-3">Request pending tutor approval.</p>
+                        <a href="{% url 'session_details' s.id %}" class="btn btn-outline-secondary btn-sm w-100 rounded-pill">View Details</a>
+                    </div>
                 </div>
-            {% else %}
-                <div class="alert alert-info">No completed sessions.</div>
-            {% endif %}
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No requested sessions.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Completed -->
+        <div class="tab-pane fade" id="comp" role="tabpanel">
+            <div class="row g-4">
+                {% for s in completed_sessions %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="custom-card h-100 p-4 shadow-sm border-0">
+                        <div class="d-flex justify-content-between mb-3"><span class="badge bg-light text-dark">{{ s.subject.name }}</span><small class="text-muted">{{ s.scheduled_time|date:"d M Y" }}</small></div>
+                        <h5 class="fw-bold mb-3">{{ s.tutor.full_name }}</h5>
+                        <a href="{% url 'session_details' s.id %}"
+                            class="btn btn-outline-dark btn-sm w-100 rounded-pill">Session Details</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No completed sessions yet.</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
+<style>
+    .badge-primary-soft {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+</style>
+<script>
+    (function () {
+        const tabName = new URLSearchParams(window.location.search).get('tab');
+        const map = {
+            upcoming: 'tab-upcoming',
+            requested: 'tab-requested',
+            completed: 'tab-completed'
+        };
+        const tabId = map[tabName];
+        if (!tabId) return;
+        const trigger = document.getElementById(tabId);
+        if (!trigger) return;
+        const tab = new bootstrap.Tab(trigger);
+        tab.show();
+    })();
+</script>
 {% endblock %}

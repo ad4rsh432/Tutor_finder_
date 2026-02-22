@@ -1,55 +1,97 @@
 {% extends "base.html" %}
+{% block title %}{{ tutor.full_name }} - Profile{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <div class="card shadow-lg p-4">
-        <div class="row">
-            <!-- Profile Picture Section -->
-            <div class="col-md-4 text-center">
-                <img src="{{ tutor.profile_picture.url }}" alt="Profile Picture" class="rounded-circle img-fluid" style="max-width: 200px;">
-            </div>
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- Sidebar: Profile Overview -->
+        <div class="col-lg-4">
+            <div class="custom-card p-4 text-center sticky-top" style="top: 100px; z-index: 10;">
+                <div class="mb-4">
+                    {% if tutor.profile_picture %}
+                    <img src="{{ tutor.profile_picture.url }}" alt="Profile" class="avatar-lg shadow-sm border p-1"
+                        style="width: 180px; height: 180px;">
+                    {% else %}
+                    <div class="avatar-lg bg-light d-flex align-items-center justify-content-center mx-auto border shadow-sm"
+                        style="width: 180px; height: 180px;">
+                        <i class="bi bi-person text-secondary fs-1"></i>
+                    </div>
+                    {% endif %}
+                </div>
 
-            <!-- Tutor Info -->
-            <div class="col-md-8">
-                <h2 class="mb-2">{{ tutor.full_name }}</h2>
-                <p class="text-muted">📍 {{ tutor.location|default:"Location not provided" }}</p>
-                
-                <!-- Subjects Taught -->
-                <p><strong>Subjects Taught:</strong>
-                    {% for subject in tutor.subjects_taught.all %}
-                        <span class="badge bg-primary">{{ subject.name }}</span>
-                    {% empty %}
-                        <span class="text-muted">No subjects listed.</span>
-                    {% endfor %}
+                <h3 class="fw-bold mb-1">{{ tutor.full_name }}</h3>
+                <p class="text-muted small mb-4">
+                    <i class="bi bi-geo-alt me-1"></i>
+                    {{ tutor.location|default:"Global" }}
                 </p>
 
-                <!-- Rating -->
-                <p><strong>Rating:</strong> 
-                    {% for i in "12345" %}
-                        {% if tutor.rating >= i|add:"0.5" %}
-                            ⭐
-                        {% else %}
-                            ☆
-                        {% endif %}
-                    {% endfor %}
-                    ({{ tutor.rating }}/5)
-                </p>
+                <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+                    <div class="text-center">
+                        <div class="h5 fw-bold mb-0">{{ tutor.experience }}</div>
+                        <small class="text-muted">Years Exp</small>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="h5 fw-bold mb-0">₹{{ tutor.hourly_rate }}</div>
+                        <small class="text-muted">Per Hour</small>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="h5 fw-bold mb-0 text-warning">
+                            <i class="bi bi-star-fill small"></i> {{ tutor.rating }}
+                        </div>
+                        <small class="text-muted">Rating</small>
+                    </div>
+                </div>
 
-                <p><strong>Experience:</strong> 🎓 {{ tutor.experience }} years</p>
-                <p><strong>Date of Birth:</strong> 📅 {{ tutor.date_of_birth|date:"F j, Y" }}</p>
-                <p><strong>Phone:</strong> 📞 <a href="tel:{{ tutor.phone_number }}">{{ tutor.phone_number|default:"Not Available" }}</a></p>
-                <p><strong>Hourly Rate:</strong> 💰 ₹{{ tutor.hourly_rate|default:"N/A" }} per hour</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'request_session' tutor.id %}"
+                        class="btn btn-primary-custom py-3 fw-bold shadow-sm">
+                        <i class="bi bi-calendar-plus me-2"></i>Request a Session
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- Bio Section -->
-        <div class="mt-4">
-            <h4>About Me</h4>
-            <p class="text-muted">{{ tutor.bio|default:"No bio available." }}</p>
-        </div>
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="custom-card p-4 p-md-5">
+                <section class="mb-5">
+                    <h4 class="fw-bold mb-4 d-flex align-items-center">
+                        <span class="card-icon me-3"><i class="bi bi-person-lines-fill"></i></span>About Me
+                    </h4>
+                    <p class="text-dark opacity-75 lh-lg">
+                        {{ tutor.bio|default:"Ready to help you learn!" }}
+                    </p>
+                </section>
 
-        <!-- Request Session Button -->
-        <div class="text-center mt-3">
-            <a href="{% url 'request_session' tutor.id %}" class="btn btn-success btn-lg">Request a Session</a>
+                <section class="mb-5">
+                    <h4 class="fw-bold mb-4 d-flex align-items-center">
+                        <span class="card-icon me-3"><i class="bi bi-mortarboard"></i></span>Subjects Offered
+                    </h4>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for subject in tutor.subjects_taught.all %}
+                        <span class="badge badge-primary-soft fs-6 px-3 py-2">
+                            <i class="bi bi-check-circle-fill me-2"></i>{{ subject.name }}
+                        </span>
+                        {% empty %}
+                        <p class="text-muted">No specific subjects listed.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section>
+                    <h4 class="fw-bold mb-4 d-flex align-items-center">
+                        <span class="card-icon me-3"><i class="bi bi-telephone"></i></span>Contact Details
+                    </h4>
+                    <div class="p-3 border rounded-3 bg-light">
+                        <p class="mb-0 fw-bold">
+                            <i class="bi bi-phone text-primary me-2"></i>
+                            {{ tutor.phone_number|default:"Contact via Request" }}
+                        </p>
+                    </div>
+                </section>
+            </div>
         </div>
     </div>
 </div>

@@ -21,7 +21,7 @@ from django.http import JsonResponse
 from datetime import datetime
 from django.utils.timezone import make_aware
 from decimal import Decimal
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from math import radians, sin, cos, sqrt, atan2
 
@@ -41,6 +41,7 @@ def student_register(request):
         form = StudentRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
+            login(request, user)
             return redirect('student_dashboard')  # Redirect to student dashboard after registration
     else:
         form = StudentRegisterForm()
@@ -60,9 +61,6 @@ def tutor_register(request):
 
 
 
-def mark_completed_sessions():
-    sessions = Session.objects.filter(status='scheduled', end_time__lt=timezone.now())
-    sessions.update(status='completed', is_completed=True)
 
 
 def home(request):
@@ -102,6 +100,7 @@ def student_dashboard(request):
             'connected_tutors': student.connected_tutors.all(),
             'pending_requests': ConnectionRequest.objects.filter(student=student, status='pending'),
             'upcoming_sessions': Session.objects.filter(student=student, scheduled_time__gte=now(), status='approved').order_by('scheduled_time'),
+            'completed_sessions': Session.objects.filter(student=student, status='completed').order_by('-scheduled_time')[:5],
             'nearby_tutors': [],  # No tutors can be found without student location
             'error_message': "⚠️ Please update your location to find nearby tutors."
         })
@@ -123,12 +122,15 @@ def student_dashboard(request):
     
     nearby_tutors.sort(key=lambda x: x[1])  # Sort by closest first
 
+    completed_sessions = Session.objects.filter(student=student, status='completed').order_by('-scheduled_time')[:5]
+
     return render(request, 'users/student_dashboard.html', {
         'student': student,
         'connected_tutors': connected_tutors,
         'pending_requests': pending_requests,
         'upcoming_sessions': upcoming_sessions,
-        'nearby_tutors': nearby_tutors
+        'nearby_tutors': nearby_tutors,
+        'completed_sessions': completed_sessions
     })
 
 
@@ -165,32 +167,38 @@ def tutor_dashboard(request):
 
 
 
-@csrf_exempt
 @login_required
+@require_POST
 def update_location(request):
-    if request.method == 'POST':
+    try:
         data = json.loads(request.body)
-        user = request.user
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request body'}, status=400)
 
-        if hasattr(user, 'studentprofile'):
-            profile = user.studentprofile
-        elif hasattr(user, 'tutorprofile'):
-            profile = user.tutorprofile
-        else:
-            return JsonResponse({'error': 'Profile not found'}, status=400)
+    user = request.user
 
-        profile.latitude = data.get('latitude')
-        profile.longitude = data.get('longitude')
-        profile.save()
+    if hasattr(user, 'studentprofile'):
+        profile = user.studentprofile
+    elif hasattr(user, 'tutorprofile'):
+        profile = user.tutorprofile
+    else:
+        return JsonResponse({'error': 'Profile not found'}, status=400)
 
-        return JsonResponse({'success': True})
+    profile.latitude = data.get('latitude')
+    profile.longitude = data.get('longitude')
+    profile.save()
+
+    return JsonResponse({'success': True})
 
 
 @login_required
 def student_profile_view(request):
     user = request.user
-    if user.role != 'student':
-        return redirect('tutor_profile')  # Redirect tutors if they try to access student profile
+    if user.role == 'tutor':
+        return redirect('tutor_profile')
+    elif user.role != 'student':
+        messages.warning(request, "Please set up your profile.")
+        return redirect('home')
 
     profile, created = StudentProfile.objects.get_or_create(user=user)
     all_subjects = Subject.objects.all()
@@ -226,65 +234,19 @@ def student_profile_view(request):
     return render(request, 'users/student_profile.html', {
         'profile': profile,
         'all_subjects': all_subjects,
-        'connected_tutors': connected_tutors
+        'connected_tutors': connected_tutors,
+        'interested_ids': profile.subjects_interested.values_list('id', flat=True)
     })
-
-
-@login_required
-def send_connection_request(request, tutor_id):
-    student = request.user.studentprofile
-    tutor = TutorProfile.objects.get(id=tutor_id)
-    
-    if not ConnectionRequest.objects.filter(student=student, tutor=tutor).exists():
-        ConnectionRequest.objects.create(student=student, tutor=tutor)
-    
-    return redirect('student_dashboard')
-
-@login_required
-def approve_connection_request(request, request_id):
-    connection_request = ConnectionRequest.objects.get(id=request_id)
-    
-    if request.user.tutorprofile == connection_request.tutor:
-        connection_request.status = 'approved'
-        connection_request.save()
-        # Add student to tutor's connected list
-        connection_request.student.connected_tutors.add(connection_request.tutor)
-    
-    return redirect('tutor_dashboard')
-
-
-@login_required
-def schedule_session(request, tutor_id):
-    student = request.user.studentprofile
-    tutor = TutorProfile.objects.get(id=tutor_id)
-
-    if request.method == "POST":
-        subject_id = request.POST.get('subject')
-        scheduled_time = request.POST.get('scheduled_time')
-        subject = Subject.objects.get(id=subject_id)
-
-        Session.objects.create(
-            student=student,
-            tutor=tutor,
-            subject=subject,
-            scheduled_time=scheduled_time
-        )
-
-        return redirect('student_dashboard')
-
-    return render(request, 'users/schedule_session.html', {
-        'tutor': tutor,
-        'subjects': tutor.subjects_taught.all(),
-    })
-
-
 
 
 @login_required
 def tutor_profile_view(request):
     user = request.user
-    if user.role != 'tutor':
-        return redirect('student_profile')  # Redirect students if they try to access tutor profile
+    if user.role == 'student':
+        return redirect('student_profile')
+    elif user.role != 'tutor':
+        messages.warning(request, "Please set up your profile.")
+        return redirect('home')
 
     profile, created = TutorProfile.objects.get_or_create(user=user)
     all_subjects = Subject.objects.all()
@@ -303,24 +265,40 @@ def tutor_profile_view(request):
     if request.method == 'POST':
         profile.full_name = request.POST.get('full_name', profile.full_name)
         profile.phone_number = request.POST.get('phone_number', profile.phone_number)
-        profile.experience = request.POST.get('experience', profile.experience)
-        # profile.hourly_rate = request.POST.get('hourly_rate', profile.hourly_rate)
+        
+        try:
+            exp = request.POST.get('experience', profile.experience)
+            profile.experience = int(exp) if exp and str(exp).isdigit() else profile.experience
+        except (ValueError, TypeError):
+            pass
+
         hourly_rate = request.POST.get('hourly_rate', profile.hourly_rate)
         profile.hourly_rate = None if hourly_rate == "" else hourly_rate
+        
         profile.location = request.POST.get('location', profile.location)
         profile.bio = request.POST.get('bio', profile.bio)
-        profile.date_of_birth = request.POST.get('date_of_birth', profile.date_of_birth)
-        # ✅ Fix: Update ManyToManyField `subjects_taught`
-        selected_subjects = request.POST.getlist('subjects_taught')  # Get list of selected subject IDs
-        profile.subjects_taught.set(selected_subjects)  # Correct way to update M2M field
+        
+        dob_str = request.POST.get('date_of_birth', None)
+        if dob_str:
+            try:
+                profile.date_of_birth = datetime.strptime(dob_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.error(request, "Invalid date format for Birthday.")
+                return redirect('tutor_profile')
+
+        selected_subjects = request.POST.getlist('subjects_taught')
+        profile.subjects_taught.set(selected_subjects)
 
         qualification.degree = request.POST.get('degree', qualification.degree)
         qualification.institution = request.POST.get('institution', qualification.institution)
-        qualification.year_completed = request.POST.get('year_completed', qualification.year_completed)
+        
+        year = request.POST.get('year_completed', qualification.year_completed)
+        if year and str(year).isdigit():
+            qualification.year_completed = int(year)
 
-        availability.day_of_week = request.POST.get('day_of_week',availability.day_of_week)
-        availability.start_time = request.POST.get('start_time',availability.start_time)
-        availability.end_time = request.POST.get('end_time',availability.end_time)
+        availability.day_of_week = request.POST.get('day_of_week', availability.day_of_week)
+        availability.start_time = request.POST.get('start_time', availability.start_time)
+        availability.end_time = request.POST.get('end_time', availability.end_time)
 
         if 'profile_picture' in request.FILES:
             profile.profile_picture = request.FILES['profile_picture']
@@ -328,9 +306,17 @@ def tutor_profile_view(request):
         profile.save()
         qualification.save()
         availability.save()
+        messages.success(request, "Profile updated successfully!")
         return redirect('tutor_profile')
 
-    return render(request, 'users/tutor_profile.html', {'profile': profile, 'all_subjects':all_subjects, 'availability':availability, 'qualification':qualification,'day_of_week_choices': day_of_week_choices,})
+    return render(request, 'users/tutor_profile.html', {
+        'profile': profile,
+        'all_subjects': all_subjects,
+        'availability': availability,
+        'qualification': qualification,
+        'day_of_week_choices': day_of_week_choices,
+        'taught_ids': profile.subjects_taught.values_list('id', flat=True)
+    })
 
 
 
@@ -338,6 +324,10 @@ def tutor_profile_view(request):
 def search_tutors(request):
     """ Search tutors based on name, subject, or location """
     query = request.GET.get('q', '')
+    if not hasattr(request.user, "studentprofile"):
+        messages.error(request, "Only students can search tutors.")
+        return redirect("dashboard_redirect")
+
     student_profile = StudentProfile.objects.get(user=request.user)  # Get the logged-in student
     connected_tutors = student_profile.connected_tutors.all()  # Fetch connected tutors
 
@@ -372,6 +362,10 @@ def send_connection_request(request, tutor_id):
 @login_required
 def approve_connection_request(request, request_id):
     """ Tutor approves a student's connection request """
+    if request.method != "POST":
+        messages.error(request, "Invalid request method.")
+        return redirect("tutor_dashboard")
+
     connection_request = get_object_or_404(ConnectionRequest, id=request_id)
 
     if request.user == connection_request.tutor.user:
@@ -380,9 +374,6 @@ def approve_connection_request(request, request_id):
 
     return redirect('tutor_dashboard')
 
-def mark_completed_sessions():
-    sessions = Session.objects.filter(status='scheduled', end_time__lt=timezone.now())
-    sessions.update(status='completed', is_completed=True)
 
 @login_required
 def book_session_view(request):
@@ -447,12 +438,11 @@ def request_session_view(request, tutor_id):
         session_date = request.POST.get("session_date")
         start_time = request.POST.get("start_time")
         end_time = request.POST.get("end_time")
-        subject_id = request.POST.get("subject_id")  # Make sure this is received
-
-        print("Received Data:", session_date, start_time, end_time, subject_id)  # Debugging
+        subject_id = request.POST.get("subject_id") or request.POST.get("subject")
 
         if not session_date or not start_time or not end_time or not subject_id:
-            return JsonResponse({"status": "error", "message": "All fields are required."}, status=400)
+            messages.error(request, "All fields are required.")
+            return redirect("request_session", tutor_id=tutor.id)
 
         try:
             subject = Subject.objects.get(id=subject_id)
@@ -460,9 +450,10 @@ def request_session_view(request, tutor_id):
             end_time = make_aware(datetime.strptime(f"{session_date} {end_time}", "%Y-%m-%d %H:%M"))
 
             if scheduled_time >= end_time:
-                return JsonResponse({"status": "error", "message": "End time must be after start time."}, status=400)
+                messages.error(request, "End time must be after start time.")
+                return redirect("request_session", tutor_id=tutor.id)
 
-            session = Session.objects.create(
+            Session.objects.create(
                 student=student,
                 tutor=tutor,
                 subject=subject,
@@ -471,14 +462,15 @@ def request_session_view(request, tutor_id):
                 status="pending"
             )
 
-            print("Session Created:", session)  # Debugging
-
-            return JsonResponse({"status": "success", "message": "Session request submitted!"})
+            messages.success(request, "Session request submitted!")
+            return redirect("student_dashboard")
 
         except Subject.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "Invalid subject."}, status=400)
+            messages.error(request, "Invalid subject.")
+            return redirect("request_session", tutor_id=tutor.id)
         except ValueError as e:
-            return JsonResponse({"status": "error", "message": f"Invalid input: {str(e)}"}, status=400)
+            messages.error(request, f"Invalid input: {str(e)}")
+            return redirect("request_session", tutor_id=tutor.id)
 
     return render(request, "users/request_session.html", {"tutor": tutor, "subjects_t":subjects_t})
 
@@ -487,11 +479,21 @@ def request_session_view(request, tutor_id):
 def tutor_sessions_view(request):
     tutor_profile = request.user.tutorprofile
     pending_sessions = Session.objects.filter(tutor=tutor_profile, status="pending")
+    approved_sessions = Session.objects.filter(tutor=tutor_profile, status="approved").order_by("scheduled_time")
+    completed_sessions = Session.objects.filter(tutor=tutor_profile, status="completed").order_by("-scheduled_time")
 
-    return render(request, 'users/tutor_sessions.html', {"pending_sessions": pending_sessions})
+    return render(request, 'users/tutor_sessions.html', {
+        "pending_sessions": pending_sessions,
+        "approved_sessions": approved_sessions,
+        "completed_sessions": completed_sessions,
+    })
 
 @login_required
 def approve_session(request, session_id):
+    if request.method != "POST":
+        messages.error(request, "Invalid request method.")
+        return redirect("tutor_sessions")
+
     session = get_object_or_404(Session, id=session_id, tutor=request.user.tutorprofile)
     session.status = "approved"
     session.save()
@@ -500,6 +502,9 @@ def approve_session(request, session_id):
 @login_required
 def session_details(request, session_id):
     session = get_object_or_404(Session, id=session_id)
+    if request.user not in [session.student.user, session.tutor.user]:
+        messages.error(request, "You are not authorized to view this session.")
+        return redirect("dashboard_redirect")
 
     # Check if the logged-in user is the tutor
     is_tutor = request.user.is_authenticated and hasattr(request.user, 'tutorprofile') and request.user.tutorprofile == session.tutor
@@ -517,10 +522,12 @@ def session_details(request, session_id):
 @login_required
 def student_sessions_view(request):
     student_profile = request.user.studentprofile
+    requested_sessions = Session.objects.filter(student=student_profile, status="pending").order_by("scheduled_time")
     upcoming_sessions = Session.objects.filter(student=student_profile, status="approved").order_by("scheduled_time")
     completed_sessions = Session.objects.filter(student=student_profile, status="completed").order_by("-scheduled_time")
 
     return render(request, 'users/student_sessions.html', {
+        "requested_sessions": requested_sessions,
         "upcoming_sessions": upcoming_sessions,
         "completed_sessions": completed_sessions
     })

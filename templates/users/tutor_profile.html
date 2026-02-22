@@ -1,135 +1,260 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}Tutor Profile Setup - TutorFinder{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Tutor Profile</h2>
-
-    <div class="row g-4">
-        <!-- Profile Information Card -->
-        <div class="col-md-4">
-            <div class="card shadow-sm p-3 text-center">
-                <div class="profile-pic-container mb-3">
-                    {% if profile.profile_picture %}
-                        <img src="{{ profile.profile_picture.url }}" class="rounded-circle img-fluid" alt="Profile Picture" style="width: 150px; height: 150px;">
-                    {% else %}
-                        <img src="https://via.placeholder.com/150" class="rounded-circle img-fluid" alt="Default Profile Picture">
-                    {% endif %}
+<div class="page-header mb-5">
+    <div class="container text-center text-md-start">
+        <div class="d-flex align-items-center gap-4 flex-column flex-md-row">
+            <div class="position-relative">
+                {% if profile.profile_picture %}
+                <img src="{{ profile.profile_picture.url }}" class="avatar-xl border-4 shadow-lg" alt="Profile"
+                    style="width: 150px; height: 150px;">
+                {% else %}
+                <div class="avatar-xl bg-white bg-opacity-20 d-flex align-items-center justify-content-center border-4 shadow-lg"
+                    style="width: 150px; height: 150px;">
+                    <i class="bi bi-person-workspace text-white fs-1"></i>
                 </div>
-                <h4>{{ profile.full_name }}</h4>
-                <p class="text-muted">{{ profile.location }}</p>
-                <p><strong>Phone:</strong> {{ profile.phone_number }}</p>
-                <p><strong>Experience:</strong> {{ profile.experience }} years</p>
-                <p><strong>Hourly Rate:</strong> ₹{{ profile.hourly_rate }}</p>
-                <p><strong>Bio:</strong> {{ profile.bio }}</p>
+                {% endif %}
+                <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 shadow-sm"
+                    style="width: 35px; height: 35px; border: 2px solid var(--accent);"
+                    onclick="document.getElementById('id_profile_picture').click();">
+                    <i class="bi bi-camera-fill text-primary"></i>
+                </button>
             </div>
-        </div>
-
-        <!-- Profile Edit Form -->
-        <div class="col-md-8">
-            <div class="card shadow-sm p-4">
-                <h4 class="mb-3">Edit Profile</h4>
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="full_name" class="form-label">Full Name:</label>
-                            <input type="text" name="full_name" class="form-control" value="{{ profile.full_name }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="phone_number" class="form-label">Phone Number:</label>
-                            <input type="text" name="phone_number" class="form-control" value="{{ profile.phone_number }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="date_of_birth" class="form-label">Date of Birth:</label>
-                            <input type="date" name="date_of_birth" class="form-control" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="location" class="form-label">Location:</label>
-                            <input type="text" name="location" class="form-control" value="{{ profile.location }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="experience" class="form-label">Experience (Years):</label>
-                            <input type="number" name="experience" class="form-control" value="{{ profile.experience }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="hourly_rate" class="form-label">Hourly Rate (₹):</label>
-                            <input type="number" step="0.01" name="hourly_rate" class="form-control" value="{{ profile.hourly_rate }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="profile_picture" class="form-label">Profile Picture:</label>
-                            <input type="file" name="profile_picture" class="form-control">
-                        </div>
-
-                        <div class="col-12">
-                            <label for="subjects_taught" class="form-label">Subjects Taught:</label>
-                            <select name="subjects_taught" class="form-control" multiple>
-                                {% for subject in all_subjects %}
-                                    <option value="{{ subject.id }}" {% if subject in profile.subjects_taught.all %}selected{% endif %}>
-                                        {{ subject.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-12">
-                            <label for="bio" class="form-label">Bio:</label>
-                            <textarea name="bio" class="form-control">{{ profile.bio }}</textarea>
-                        </div>
-
-                        <!-- Qualifications Section -->
-                        <div class="col-12">
-                            <label class="form-label">Qualifications:</label>
-                            {% for qual in profile.qualifications.all %}
-                                <div class="mb-2 p-2 border rounded">
-                                    <input type="text" name="degree" class="form-control mb-1" value="{{ qual.degree }}" placeholder="Degree">
-                                    <input type="text" name="institution" class="form-control mb-1" value="{{ qual.institution }}" placeholder="Institution">
-                                    <input type="number" name="year_completed" class="form-control" value="{{ qual.year_completed }}" placeholder="Year Completed">
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <!-- Availability Section -->
-                        <div class="col-12">
-                            <h5 class="mt-3">Availability</h5>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <label for="day_of_week" class="form-label">Day of the Week:</label>
-                                    <select name="day_of_week" class="form-control">
-                                        <option value="">Select Day</option>
-                                        {% for day, day_label in day_of_week_choices %}
-                                            <option value="{{ day }}" {% if availability.day_of_week == day %}selected{% endif %}>
-                                                {{ day_label }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label for="start_time" class="form-label">Start Time:</label>
-                                    <input type="time" name="start_time" class="form-control" value="{{ availability.start_time|time:'H:i' }}">
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label for="end_time" class="form-label">End Time:</label>
-                                    <input type="time" name="end_time" class="form-control" value="{{ availability.end_time|time:'H:i' }}">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 text-center mt-3">
-                            <button type="submit" class="btn btn-primary w-50">Update Profile</button>
-                        </div>
-                    </div>
-                </form>
+            <div>
+                <h1 class="hero-title mb-1 text-white">
+                    {{ profile.full_name|default:user.username }}
+                </h1>
+                <p class="mb-0 opacity-75 text-white lead">
+                    <i class="bi bi-geo-alt me-2"></i>
+                    {{ profile.location|default:"Global Educator" }}
+                </p>
+                <div class="mt-3 d-flex flex-wrap gap-2">
+                    <span class="badge badge-accent-soft px-3 py-2 text-dark fw-bold">TUTOR</span>
+                    <span
+                        class="badge bg-white bg-opacity-10 px-3 py-2 text-white border border-white border-opacity-25">
+                        {{ profile.experience|default:"0" }}y Exp
+                    </span>
+                    <span
+                        class="badge bg-white bg-opacity-10 px-3 py-2 text-white border border-white border-opacity-25">
+                        ₹{{ profile.hourly_rate|default:"0" }}/hr
+                    </span>
+                </div>
             </div>
         </div>
     </div>
-    <br><br>
 </div>
+
+<div class="container pb-5">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="custom-card p-3 sticky-top" style="top: 100px;">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                    <button class="nav-link active text-start py-3 px-4 mb-2 d-flex align-items-center gap-3"
+                        id="edit-profile-tab" data-bs-toggle="pill" data-bs-target="#edit-profile" type="button"
+                        role="tab">
+                        <i class="bi bi-person-workspace fs-5"></i>
+                        <span>Professional Info</span>
+                    </button>
+                    <button class="nav-link text-start py-3 px-4 mb-2 d-flex align-items-center gap-3"
+                        id="qualification-tab" data-bs-toggle="pill" data-bs-target="#qualification" type="button"
+                        role="tab">
+                        <i class="bi bi-mortarboard fs-5"></i>
+                        <span>Credentials</span>
+                    </button>
+                    <button class="nav-link text-start py-3 px-4 mb-2 d-flex align-items-center gap-3"
+                        id="availability-tab" data-bs-toggle="pill" data-bs-target="#availability-sec" type="button"
+                        role="tab">
+                        <i class="bi bi-calendar-event fs-5"></i>
+                        <span>Availability</span>
+                    </button>
+                    <hr class="my-3 mx-3 opacity-10">
+                    <a href="{% url 'tutor_dashboard' %}"
+                        class="nav-link text-start py-3 px-4 d-flex align-items-center gap-3 text-muted">
+                        <i class="bi bi-arrow-left fs-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="edit-profile" role="tabpanel">
+                    <div class="custom-card p-4 p-md-5 border-0 shadow-sm">
+                        <h4 class="fw-bold mb-4 pb-2 border-bottom">Teaching Profile</h4>
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="file" name="profile_picture" id="id_profile_picture" class="d-none">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" name="full_name" class="form-control"
+                                        value="{{ profile.full_name }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone</label>
+                                    <input type="text" name="phone_number" class="form-control"
+                                        value="{{ profile.phone_number }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Experience (Years)</label>
+                                    <input type="number" name="experience" class="form-control"
+                                        value="{{ profile.experience }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Rate (₹)</label>
+                                    <input type="number" step="0.01" name="hourly_rate" class="form-control"
+                                        value="{{ profile.hourly_rate }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" name="location" class="form-control"
+                                        value="{{ profile.location }}">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label mb-3">Subjects Offered:</label>
+                                    <div class="row g-2">
+                                        <select name="subjects_taught" class="d-none" multiple id="subject-select">
+                                            {% for s in all_subjects %}
+                                            <option value="{{ s.id }}" {% if s.id in taught_ids %}selected{% endif %}>{{ s.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% for s in all_subjects %}
+                                        <div class="col-md-3">
+                                            <div class="subject-chip p-2 border rounded-pill text-center transition-all cursor-pointer {% if s.id in taught_ids %}active{% endif %}"
+                                                onclick="toggleT({{ s.id }}, this)">
+                                                <small class="fw-bold">{{ s.name }}</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Professional Bio</label>
+                                    <textarea name="bio" class="form-control" rows="5">{{ profile.bio }}</textarea>
+                                </div>
+                                <div class="col-12 pt-4 border-top text-end">
+                                    <button type="submit" class="btn btn-primary-custom px-5 py-2">Update Professional
+                                        Details</button>
+                                </div>
+                                <!-- Hidden fields to persist data -->
+                                <input type="hidden" name="degree" value="{{ qualification.degree }}">
+                                <input type="hidden" name="institution" value="{{ qualification.institution }}">
+                                <input type="hidden" name="year_completed" value="{{ qualification.year_completed }}">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="qualification" role="tabpanel">
+                    <div class="custom-card p-4 p-md-5 border-0 shadow-sm">
+                        <h4 class="fw-bold mb-4 pb-2 border-bottom">Academic Credentials</h4>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="full_name" value="{{ profile.full_name }}">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Degree</label>
+                                    <input type="text" name="degree" class="form-control"
+                                        value="{{ qualification.degree }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label">University</label>
+                                    <input type="text" name="institution" class="form-control"
+                                        value="{{ qualification.institution }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Year</label>
+                                    <input type="number" name="year_completed" class="form-control"
+                                        value="{{ qualification.year_completed }}">
+                                </div>
+                                <div class="col-12 pt-4 border-top text-end">
+                                    <button type="submit" class="btn btn-primary-custom px-5 py-2">Save
+                                        Credentials</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="availability-sec" role="tabpanel">
+                    <div class="custom-card p-4 p-md-5 border-0 shadow-sm">
+                        <h4 class="fw-bold mb-4 pb-2 border-bottom">Weekly Schedule</h4>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="full_name" value="{{ profile.full_name }}">
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <label class="form-label d-block mb-3">Preferred Day</label>
+                                    <div class="row g-2">
+                                        {% for d, l in day_of_week_choices %}
+                                        <div class="col">
+                                            <input type="radio" class="btn-check" name="day_of_week" id="d_{{ d }}"
+                                                value="{{ d }}" {% if availability.day_of_week == d %}checked{% endif %}>
+                                            <label class="btn btn-outline-primary w-100 py-3" for="d_{{ d }}">{{ l|slice:":3" }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="time" name="start_time" class="form-control"
+                                        value="{{ availability.start_time|time:'H:i' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">End Time</label>
+                                    <input type="time" name="end_time" class="form-control"
+                                        value="{{ availability.end_time|time:'H:i' }}">
+                                </div>
+                                <div class="col-12 pt-4 border-top text-end">
+                                    <button type="submit" class="btn btn-primary-custom px-5 py-2">Update
+                                        Schedule</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link.active {
+        background: var(--primary);
+        color: white;
+    }
+
+    .subject-chip:hover {
+        border-color: var(--primary) !important;
+        background: var(--primary-xlight);
+    }
+
+    .subject-chip.active {
+        border-color: var(--primary) !important;
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-check:checked+label {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    function toggleT(id, el) {
+        const sel = document.getElementById('subject-select');
+        const opt = [...sel.options].find(o => o.value == id);
+        if (opt.selected) { opt.selected = false; el.classList.remove('active'); }
+        else { opt.selected = true; el.classList.add('active'); }
+    }
+</script>
 {% endblock %}

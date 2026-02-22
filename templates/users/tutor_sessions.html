@@ -1,28 +1,84 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Pending Session Requests</h2>
+{% block title %}Manage Sessions - TutorFinder{% endblock %}
 
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card shadow-sm p-4 rounded">
-                {% if pending_sessions %}
-                    <ul class="list-group">
-                        {% for session in pending_sessions %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <p class="mb-1"><strong>{{ session.student.full_name }}</strong> - {{ session.subject.name }}</p>
-                                <small class="text-muted">Scheduled: <strong>{{ session.scheduled_time }}</strong></small>
-                            </div>
-                            <a href="{% url 'approve_session' session.id %}" class="btn btn-success btn-sm">Approve</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-center text-muted">No pending session requests.</p>
-                {% endif %}
-            </div>
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12 text-center text-md-start">
+            <h2 class="fw-bold mb-1">Session Approvals</h2>
+            <p class="text-muted">Review incoming requests from your students.</p>
         </div>
+    </div>
+
+    <div class="custom-card p-4 mb-4">
+        <h4 class="fw-bold mb-3">Pending Requests</h4>
+        {% if pending_sessions %}
+        <div class="row g-4">
+            {% for s in pending_sessions %}
+            <div class="col-md-6 border-bottom pb-4 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-md bg-light rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person text-secondary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="fw-bold mb-0">{{ s.student.full_name }}</h5>
+                        <span class="badge badge-primary-soft">{{ s.subject.name }}</span>
+                        <div class="small text-muted mt-1"><i class="bi bi-clock me-1"></i>{{ s.scheduled_time|date:"D, M d | H:i" }}</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{% url 'approve_session' s.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-sm px-3">Approve</button>
+                        </form>
+                        <a href="{% url 'session_details' s.id %}" class="btn btn-outline-secondary btn-sm">Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No pending requests.</p>
+        {% endif %}
+    </div>
+
+    <div class="custom-card p-4 mb-4">
+        <h4 class="fw-bold mb-3">Approved Sessions</h4>
+        {% if approved_sessions %}
+        <div class="row g-3">
+            {% for s in approved_sessions %}
+            <div class="col-md-6">
+                <div class="p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-1">{{ s.student.full_name }}</h6>
+                        <small class="text-muted">{{ s.subject.name }} | {{ s.scheduled_time|date:"M d, H:i" }}</small>
+                    </div>
+                    <a href="{% url 'session_details' s.id %}" class="btn btn-sm btn-outline-primary">Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No approved sessions.</p>
+        {% endif %}
+    </div>
+
+    <div class="custom-card p-4">
+        <h4 class="fw-bold mb-3">Completed Sessions</h4>
+        {% if completed_sessions %}
+        <div class="row g-3">
+            {% for s in completed_sessions %}
+            <div class="col-md-6">
+                <div class="p-3 border rounded-3">
+                    <h6 class="fw-bold mb-1">{{ s.student.full_name }}</h6>
+                    <small class="text-muted d-block mb-2">{{ s.subject.name }} | {{ s.scheduled_time|date:"M d, Y H:i" }}</small>
+                    <a href="{% url 'session_details' s.id %}" class="btn btn-sm btn-outline-secondary">View Session</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No completed sessions yet.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -1,97 +1,216 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}Tutor Dashboard — TutorFinder{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Tutor Dashboard</h2>
+<div class="container py-4">
+    <!-- Hero Section -->
+    <div class="row mb-5" data-aos="fade-down">
+        <div class="col-12">
+            <div class="profile-hero p-4 p-md-5 d-flex flex-column flex-md-row align-items-center gap-4">
+                <div class="position-relative">
+                    {% if tutor.profile_picture %}
+                    <img src="{{ tutor.profile_picture.url }}" class="avatar-xl border-4" alt="{{ tutor.full_name }}">
+                    {% else %}
+                    <div
+                        class="avatar-xl bg-white bg-opacity-20 d-flex align-items-center justify-content-center border-4">
+                        <i class="bi bi-person-workspace text-white fs-1"></i>
+                    </div>
+                    {% endif %}
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="text-center text-md-start">
+                    <span class="badge badge-accent-soft mb-2 text-uppercase">Tutor / Educator</span>
+                    <h1 class="hero-title mb-1 text-white">Welcome, {{ tutor.full_name|default:user.username }}!</h1>
+                    <p class="opacity-75 mb-0 text-white">You have {{ pending_sessions }} pending session requests.</p>
+                </div>
+                <div class="ms-md-auto">
+                    <a href="{% url 'tutor_profile' %}" class="btn btn-primary-custom px-4">
+                        <i class="bi bi-person-gear me-2"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-people"></i></div>
+                <div class="stat-value" data-count="{{ connection_requests.count }}">0</div>
+                <div class="stat-label">Connections</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon accent"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-value" data-count="{{ pending_sessions }}">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success text-white"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-value" data-count="{{ upcoming_sessions.count }}">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info text-white"><i class="bi bi-award"></i></div>
+                <div class="stat-value">{{ tutor.rating|default:"5.0" }}</div>
+                <div class="stat-label">Rating</div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4">
-        <!-- Pending Connection Requests -->
-        <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Pending Connection Requests</h3>
-                <ul class="list-group">
-                    {% for request in connection_requests %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center mt-1">
-                        {{ request.student.full_name }} 
-                        <a href="{% url 'approve_connection_request' request.id %}" class="btn btn-success btn-sm">Approve</a>
-                    </li>
+        <div class="col-lg-8">
+            <div class="custom-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <h4 class="mb-0 fw-bold">Active Schedule</h4>
+                    <a href="{% url 'tutor_sessions' %}" class="small fw-bold text-primary">View All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Time</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in upcoming_sessions|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if s.student.profile_picture %}<img src="{{ s.student.profile_picture.url }}"
+                                            class="avatar-sm">{% else %}<div
+                                            class="avatar-sm bg-light d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-person text-muted"></i></div>{% endif %}
+                                        <span class="fw-bold small">{{ s.student.full_name }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-primary-soft">{{ s.subject.name }}</span></td>
+                                <td><small class="fw-bold">{{ s.scheduled_time|date:"M d" }}</small><br><small
+                                        class="text-muted">{{ s.scheduled_time|time:"H:i" }}</small></td>
+                                <td class="text-end">
+                                    {% if s.status == "approved" %}
+                                    <form action="{% url 'mark_session_completed' s.id %}" method="POST"
+                                        class="d-inline">{% csrf_token %}<button type="submit"
+                                            class="btn btn-sm btn-success rounded-pill px-3">Mark Done</button></form>
+                                    {% else %}<span class="badge bg-light text-muted border">Pending</span>{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No active sessions.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Teaching History (Completed Sessions) -->
+            <div class="custom-card p-4">
+                <h5 class="fw-bold mb-4">Teaching History</h5>
+                <div class="row g-3">
+                    {% for s in previous_sessions|slice:":4" %}
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center"
+                                style="width:40px;height:40px;"><i class="bi bi-journal-check text-success"></i></div>
+                            <div>
+                                <h6 class="mb-0 small fw-bold">{{ s.student.full_name }}</h6>
+                                <small class="text-muted" style="font-size: .7rem;">{{ s.subject.name }} • {{ s.scheduled_time|date:"M d" }}</small>
+                            </div>
+                        </div>
+                    </div>
                     {% empty %}
-                    <li class="list-group-item text-muted">No pending requests.</li>
+                    <div class="col-12 py-3 text-center border rounded-3 border-dashed">
+                        <p class="text-muted small mb-0">No completed sessions yet.</p>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
 
-        <!-- Upcoming Sessions -->
-        <div class="col-md-6">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Upcoming Sessions</h3>
-                <ul class="list-group">
-                    {% for session in upcoming_sessions %}
-                    <li class="list-group-item mt-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ session.subject.name }}</strong> with <strong>{{ session.student.full_name }}</strong> at {{ session.scheduled_time }}
-                        </div>
-                        <div class="d-flex column-gap-2">
-                            <a href="{% url 'session_details' session.id %}" class="btn btn-warning" style="font-size: 12px;">View</a>
-                            {% if session.status == "completed" %}
-                                <span class="badge bg-success" >Completed</span>
-                            {% elif session.status == "approved" %}
-                                <form action="{% url 'mark_session_completed' session.id %}" method="POST" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-success btn-sm" style="font-size: 12px;">Mark as Completed</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </li>
-{% empty %}
-<li class="list-group-item text-muted">No upcoming sessions.</li>
-{% endfor %}
-                </ul>
+        <div class="col-lg-4">
+            <div class="custom-card p-4 mb-4">
+                <h5 class="mb-4 fw-bold">Connection Requests</h5>
+                {% for r in connection_requests %}
+                <div class="p-3 border rounded-3 bg-light mb-3">
+                    <h6 class="mb-1 fw-bold small">{{ r.student.full_name }}</h6>
+                    <p class="text-muted x-small mb-3">Interested in learning.</p>
+                    <form method="POST" action="{% url 'approve_connection_request' r.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success w-100">Accept Request</button>
+                    </form>
+                </div>
+                {% empty %}
+                <div class="text-center py-3"><i class="bi bi-inbox fs-2 text-muted opacity-25"></i>
+                    <p class="text-muted small mt-2">All caught up!</p>
+                </div>
+                {% endfor %}
             </div>
-        </div>
-        <!-- Previous Sessions -->
-        <div class="col-md-12">
-            <div class="card shadow-sm p-3 rounded bento-box">
-                <h3 class="mb-3">Previous Sessions</h3>
-                <ul class="list-group">
-                    {% for session in previous_sessions %}
-                    <li class="list-group-item mt-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ session.subject.name }}</strong> with <strong>{{ session.student.full_name }}</strong> 
-                            on {{ session.scheduled_time }}
-                        </div>
-                        <a href="{% url 'session_details' session.id %}" class="btn btn-info btn-sm">View</a>
-                    </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted">No previous sessions.</li>
-                    {% endfor %}
-                </ul>
+
+            <div class="custom-card p-4 bg-white border-primary border-top border-4">
+                <h6 class="fw-bold mb-3">Public Profile Info</h6>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Rate</small><small
+                        class="fw-bold">₹{{ tutor.hourly_rate }}/hr</small></div>
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-2">Subjects</small>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for subj in tutor.subjects_taught.all %}<span class="badge bg-light text-primary border"
+                            style="font-size: .65rem;">{{ subj.name }}</span>{% endfor %}
+                    </div>
+                </div>
+                <a href="{% url 'view_tutor_profile' tutor.id %}"
+                    class="btn btn-sm btn-outline-primary w-100 rounded-pill">View Public Profile</a>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                fetch('/update-location/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    })
-                });
-            }, function(error) {
-                console.error("Error fetching location:", error.message);
-            });
-        } else {
-            console.error("Geolocation is not supported by this browser.");
-        }
-    });
-    </script>
-    
+<style>
+    .profile-hero {
+        background: var(--grad-hero);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .status-indicator {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 18px;
+        height: 18px;
+        background: #10b981;
+        border: 3px solid #1a3a5c;
+        border-radius: 50%;
+    }
+
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .x-small {
+        font-size: .7rem;
+    }
+
+    .badge-primary-soft {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+</style>
+
+
 {% endblock %}
+

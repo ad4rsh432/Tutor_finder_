@@ -1,42 +1,81 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Find Tutors - TutorFinder{% endblock %}
+
 {% block content %}
-<div class="container mt-4 bg-white">
-    <h2 class="text-center">Find Tutors</h2>
-    <div class="d-flex justify-content-center">
-        <div class="w-50">
-            <form method="get" class="mb-3">
-                <input type="text" name="q" class="form-control" placeholder="Search by name, subject, or location" value="{{ query }}">
-                <button type="submit" class="btn btn-primary mt-2">Search</button>
+<div class="container py-5">
+    <div class="row mb-5" data-aos="fade-down">
+        <div class="col-lg-8">
+            <h1 class="fw-bold mb-2">Find Your Perfect Tutor</h1>
+            <p class="text-muted">Browse through our verified experts and start learning today.</p>
+        </div>
+        <div class="col-lg-4">
+            <form action="{% url 'search_tutors' %}" method="GET">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control" placeholder="Search by name or subject..."
+                        value="{{ request.GET.q }}">
+                    <button class="btn btn-primary-custom" type="submit"><i class="bi bi-search"></i></button>
+                </div>
             </form>
         </div>
     </div>
-    <ul class="list-group">
+
+    <div class="row g-4">
         {% for tutor in tutors %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-1">{{ tutor.full_name }}</h5>
-                <p class="mb-1 text-muted">Location: {{ tutor.location }}</p>
-                <div>
-                    {% for s in tutor.subjects_taught.all %}
-                        <span class="badge bg-primary">{{ s.name }}</span>
-                    {% endfor %}
+        <div class="col-md-6 col-lg-4" data-aos="fade-up">
+            <div class="custom-card h-100 border-0 shadow-sm overflow-hidden">
+                <div class="p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        {% if tutor.profile_picture %}
+                        <img src="{{ tutor.profile_picture.url }}" class="avatar-lg rounded-3 me-3"
+                            style="width:70px;height:70px;object-fit:cover;">
+                        {% else %}
+                        <div class="avatar-lg bg-light rounded-3 d-flex align-items-center justify-content-center me-3"
+                            style="width:70px;height:70px;"><i class="bi bi-person text-muted fs-2"></i></div>
+                        {% endif %}
+                        <div>
+                            <h5 class="fw-bold mb-0 text-truncate" style="max-width:150px;">{{ tutor.full_name }}</h5>
+                            <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ tutor.location }}</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="text-warning mb-2 h6">
+                            <i class="bi bi-star-fill"></i> {{ tutor.rating|default:"5.0" }}
+                            <small class="text-muted ms-1">({{ tutor.experience }}y Exp)</small>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for s in tutor.subjects_taught.all|slice:":3" %}<span
+                                class="badge badge-primary-soft x-small">{{ s.name }}</span>{% endfor %}
+                            {% if tutor.subjects_taught.count > 3 %}<span class="x-small text-muted">+{{ tutor.subjects_taught.count|add:"-3" }} more</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <div class="h5 fw-bold mb-0 text-primary">₹{{ tutor.hourly_rate }}/hr</div>
+                        <a href="{% url 'view_tutor_profile' tutor.id %}"
+                            class="btn btn-sm btn-outline-primary px-3 rounded-pill">View Profile</a>
+                    </div>
                 </div>
             </div>
-
-            {% if tutor in connected_tutors %}
-                <!-- ✅ Show 'Connected' badge if already connected -->
-                <span class="badge bg-secondary">Connected</span>
-            {% else %}
-                <!-- ❌ Show 'Connect' button if not connected -->
-                <form method="post" action="{% url 'send_connection_request' tutor.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success btn-sm">Connect</button>
-                </form>
-            {% endif %}
-        </li>
+        </div>
         {% empty %}
-        <li class="list-group-item">No tutors found.</li>
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-search text-muted opacity-25 d-block mb-3" style="font-size: 4rem;"></i>
+            <h3>No tutors found</h3>
+            <p class="text-muted">Try a wider search or different keywords.</p>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
+<style>
+    .badge-primary-soft {
+        background: var(--primary-light);
+        color: var(--primary-dark);
+    }
+
+    .x-small {
+        font-size: .7rem;
+    }
+</style>
 {% endblock %}

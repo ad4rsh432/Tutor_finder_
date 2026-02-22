@@ -1,30 +1,93 @@
 {% extends "base.html" %}
 {% load static %}
+{% block title %}Tutor Registration — TutorFinder{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center" >
-        <div class="col-md-6" >
-            <div class="card shadow-lg" >
-                <div class="card-body"  >
-                    <h2 class="text-center">Tutor Registration</h2>
-                    <form method="post" style="padding:15px;">
-                        {% csrf_token %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <!-- Header -->
+            <div class="text-center mb-5" data-aos="fade-down">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                    style="width:64px;height:64px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:18px;box-shadow:0 8px 25px rgba(99,102,241,.35);">
+                    <i class="bi bi-briefcase-fill text-white fs-3"></i>
+                </div>
+                <h2 class="fw-bold mb-1">Join as an Expert Tutor</h2>
+                <p class="text-muted">Share your knowledge and start earning on your own schedule.</p>
+            </div>
+
+            <!-- Perks strip -->
+            <div class="row g-3 mb-5 text-center" data-aos="fade-up">
+                <div class="col-4">
+                    <div class="p-3 rounded-3 h-100"
+                        style="background:var(--primary-xlight);border:1px solid var(--primary-light);">
+                        <i class="bi bi-cash-stack text-primary fs-4 mb-2 d-block"></i>
+                        <small class="fw-bold text-primary">Earn More</small>
+                        <p class="mb-0" style="font-size:.72rem;color:var(--secondary);">Set your own hourly rate</p>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded-3 h-100" style="background:#eff6ff;border:1px solid #bfdbfe;">
+                        <i class="bi bi-clock text-primary fs-4 mb-2 d-block" style="color:#6366f1!important;"></i>
+                        <small class="fw-bold" style="color:#6366f1;">Flexible Hours</small>
+                        <p class="mb-0" style="font-size:.72rem;color:var(--secondary);">Teach when it suits you</p>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-3 rounded-3 h-100" style="background:#fef3c7;border:1px solid #fde68a;">
+                        <i class="bi bi-people-fill text-warning fs-4 mb-2 d-block"></i>
+                        <small class="fw-bold text-warning">Grow Network</small>
+                        <p class="mb-0" style="font-size:.72rem;color:var(--secondary);">Meet eager students</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="custom-card p-4 p-md-5" data-aos="fade-up" data-aos-delay="100">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
                         {% for field in form %}
-                            <div class="mb-3">
-                                {{ field.label_tag }}
-                                {{ field }}
-                                <small class="text-danger">{{ field.errors }}</small>
-                            </div>
+                        <div class="col-md-{% if 'password' in field.html_name|lower %}6{% else %}12{% endif %}">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <small class="text-danger d-flex align-items-center gap-1 mt-1">
+                                <i class="bi bi-exclamation-circle-fill"></i> {{ field.errors.0 }}
+                            </small>
+                            {% endif %}
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
                         {% endfor %}
-                        <button type="submit" class="btn btn-success w-100">Register as Tutor</button>
-                    </form>
-                    <p class="text-center mt-3">
-                        Already have an account? <a href="{% url 'login' %}">Login here</a>.
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn w-100 py-3 fw-bold text-white"
+                            style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:10px;box-shadow:0 8px 25px rgba(99,102,241,.35);">
+                            <i class="bi bi-rocket-takeoff me-2"></i>Register as Tutor
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top">
+                    <p class="text-muted small mb-2">Already have a tutor account?
+                        <a href="{% url 'login' %}" class="text-primary fw-bold">Sign in here</a>
+                    </p>
+                    <p class="text-muted small">Want to learn instead?
+                        <a href="{% url 'student_register' %}" class="text-primary fw-bold">Register as a Student</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+        if (!el.classList.contains('btn') && el.type !== 'hidden') {
+            el.classList.add('form-control');
+        }
+    });
+</script>
 {% endblock %}
