@@ -209,7 +209,11 @@ def student_profile_view(request):
     if request.method == 'POST':
         profile.full_name = request.POST.get('full_name', profile.full_name)
         profile.phone_number = request.POST.get('phone_number', profile.phone_number)
-        profile.age = request.POST.get('age', profile.age)
+        try:
+            age_val = request.POST.get('age', profile.age)
+            profile.age = int(age_val) if age_val and str(age_val).isdigit() else profile.age
+        except (ValueError, TypeError):
+            pass
         profile.location = request.POST.get('location', profile.location)
         profile.address = request.POST.get('address', profile.address)
         profile.bio = request.POST.get('bio', profile.bio)
@@ -273,7 +277,10 @@ def tutor_profile_view(request):
             pass
 
         hourly_rate = request.POST.get('hourly_rate', profile.hourly_rate)
-        profile.hourly_rate = None if hourly_rate == "" else hourly_rate
+        try:
+            profile.hourly_rate = None if hourly_rate in ["", None] else Decimal(str(hourly_rate))
+        except (ValueError, TypeError, ArithmeticError):
+            pass
         
         profile.location = request.POST.get('location', profile.location)
         profile.bio = request.POST.get('bio', profile.bio)
@@ -572,7 +579,10 @@ def rate_tutor(request, session_id):
         return redirect("session_details", session_id=session.id)
 
     if request.method == "POST":
-        rating_value = int(request.POST.get("rating"))
+        try:
+            rating_value = int(request.POST.get("rating", 0))
+        except (ValueError, TypeError):
+            rating_value = 0
         feedback = request.POST.get("feedback", "")
 
         if 1 <= rating_value <= 5:

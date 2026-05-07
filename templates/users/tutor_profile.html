@@ -154,6 +154,11 @@
                         <form method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="full_name" value="{{ profile.full_name }}">
+                            <select name="subjects_taught" multiple class="d-none">
+                                {% for sid in taught_ids %}
+                                <option value="{{ sid }}" selected></option>
+                                {% endfor %}
+                            </select>
                             <div class="row g-4">
                                 <div class="col-md-12">
                                     <label class="form-label">Degree</label>
@@ -185,6 +190,11 @@
                         <form method="POST">
                             {% csrf_token %}
                             <input type="hidden" name="full_name" value="{{ profile.full_name }}">
+                            <select name="subjects_taught" multiple class="d-none">
+                                {% for sid in taught_ids %}
+                                <option value="{{ sid }}" selected></option>
+                                {% endfor %}
+                            </select>
                             <div class="row g-4">
                                 <div class="col-12">
                                     <label class="form-label d-block mb-3">Preferred Day</label>

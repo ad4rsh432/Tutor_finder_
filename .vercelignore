@@ -1,0 +1,9 @@
+.git
+.idea
+__pycache__
+**/__pycache__
+*.pyc
+tutor
+media
+profile_pics
+db.sqlite3

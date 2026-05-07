@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "sh build_files.sh",
+  "functions": {
+    "api/**/*.py": {
+      "includeFiles": "{tutorfinder/**,users/**,templates/**,staticfiles/**,static/**}",
+      "excludeFiles": "{tutor/**,media/**,profile_pics/**,**/__pycache__/**,**/*.pyc,db.sqlite3}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.py"
+    }
+  ]
+}
